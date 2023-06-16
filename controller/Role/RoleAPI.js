@@ -1,6 +1,7 @@
 const { Snowflake } = require("@theinternetfolks/snowflake");
 const pool = require("../../db");
 
+//role api
 exports.addRole = async (req, res) => {
   try {
     const { name } = req.body;
@@ -38,5 +39,54 @@ exports.addRole = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+//get api
+exports.getRoles = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1; // Current page number
+    const limit = 10; // Number of roles per page
+
+    // Count total number of roles
+    const countQuery = "SELECT COUNT(*) AS total FROM role";
+    const countResult = await pool.promise().query(countQuery);
+    const totalRoles = countResult[0][0].total;
+
+    // Calculate total number of pages
+    const totalPages = Math.ceil(totalRoles / limit);
+
+    // Calculate the offset for pagination
+    const offset = (page - 1) * limit;
+
+    // Retrieve roles with pagination
+    const query =
+      "SELECT id, name, DATE_FORMAT(created_at, '%Y-%m-%dT%T.%fZ') AS created_at, DATE_FORMAT(updated_at, '%Y-%m-%dT%T.%fZ') AS updated_at FROM role LIMIT ? OFFSET ?";
+    const result = await pool.promise().query(query, [limit, offset]);
+    const roles = result[0];
+
+    const roleData = roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      created_at: role.created_at,
+      updated_at: role.updated_at,
+    }));
+
+    const response = {
+      status: true,
+      content: {
+        meta: {
+          total: totalRoles,
+          pages: totalPages,
+          page: page,
+        },
+        data: roleData,
+      },
+    };
+
+    return res.json(response);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
