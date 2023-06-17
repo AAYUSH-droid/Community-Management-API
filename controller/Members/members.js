@@ -28,10 +28,8 @@ exports.addMember = async (req, res) => {
       });
     }
 
-    // Generate a unique ID for the member using Snowflake
     const memberId = Snowflake.generate();
 
-    // Add the member to the community with the specified role
     const query =
       "INSERT INTO member (id, community, user, role, created_at) VALUES (?, ?, ?, ?, ?)";
     // const createdAt = new Date().toISOString();
@@ -81,4 +79,39 @@ async function checkIfCommunityAdmin(communityId, ownerId) {
   const owner = result[0][0].owner;
 
   return owner === ownerId;
+}
+
+//delete api
+exports.deleteMember = async (req, res) => {
+  try {
+    const memberId = req.params.memberId;
+    const token = req.headers.authorization;
+    const userId = getUserIdFromToken(token);
+    const communityId = await getCommunityIdFromMemberId(memberId);
+
+    // Check if the requester is the community admin
+    const isCommunityAdmin = await checkIfCommunityAdmin(communityId, userId);
+    if (!isCommunityAdmin) {
+      return res.status(403).json({ error: "NOT_ALLOWED_ACCESS" });
+    }
+
+    // Delete the member from the community
+    const deleteQuery = "DELETE FROM member WHERE id = ?";
+    await pool.promise().query(deleteQuery, [memberId]);
+
+    return res.json({ status: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+async function getCommunityIdFromMemberId(memberId) {
+  const query = "SELECT community FROM member WHERE id = ?";
+  const result = await pool.promise().query(query, [memberId]);
+  if (result[0].length > 0) {
+    return result[0][0].community;
+  } else {
+    throw new Error("Member not found");
+  }
 }
