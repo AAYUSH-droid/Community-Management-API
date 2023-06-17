@@ -18,6 +18,14 @@ app.use("/v1", role);
 const USERAPI = require("./routes/User/userRoute");
 app.use("/v1/auth", USERAPI);
 
+//community api
+const community = require("./routes/Community/communityRoute");
+app.use("/v1", community);
+
+//member api
+const member = require("./routes/Members/memberRoute");
+app.use("/v1", member);
+
 app.listen(port, () =>
   console.log(`Server is working on http://localhost:${port}`)
 );
