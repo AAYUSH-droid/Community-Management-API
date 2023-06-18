@@ -8,3 +8,22 @@
 <img width="988" alt="Screenshot 2023-06-18 at 5 58 14 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/9105884f-07a0-414a-8a62-895032ca915b">
 <img width="931" alt="Screenshot 2023-06-18 at 6 00 25 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/7221b8f7-b793-4705-94e3-3cf47132829d">
 <img width="952" alt="Screenshot 2023-06-18 at 6 01 36 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/4b57b347-22ae-49eb-88f7-b9252d75cf4a">
+
+## User table
+<img width="825" alt="Screenshot 2023-06-18 at 6 17 41 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/77684ec0-aad6-4904-ae6d-9d5245178cd6">
+
+## Community table
+<img width="717" alt="Screenshot 2023-06-18 at 6 17 46 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/2863ec84-e01f-4e0d-bc4a-5e1e93537b36">
+
+## Role table
+<img width="494" alt="Screenshot 2023-06-18 at 6 17 51 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/40240ada-3e32-401e-b2fd-6115384d7835">
+
+## Members Table
+<img width="644" alt="Screenshot 2023-06-18 at 6 17 56 PM" src="https://github.com/AAYUSH-droid/TIF-SDE-ASSIGNMENT/assets/76835619/9a90cd9a-64c3-464b-8a42-a60dd4fe1098">
+
+
+
+
+
+
+
