@@ -51,7 +51,6 @@ exports.addMember = async (req, res) => {
       .promise()
       .query(query, [memberId, community, user, role, createdAt]);
 
-    // Prepare the response
     const response = {
       status: true,
       content: {
@@ -89,13 +88,11 @@ exports.deleteMember = async (req, res) => {
     const userId = getUserIdFromToken(token);
     const communityId = await getCommunityIdFromMemberId(memberId);
 
-    // Check if the requester is the community admin
     const isCommunityAdmin = await checkIfCommunityAdmin(communityId, userId);
     if (!isCommunityAdmin) {
       return res.status(403).json({ error: "NOT_ALLOWED_ACCESS" });
     }
 
-    // Delete the member from the community
     const deleteQuery = "DELETE FROM member WHERE id = ?";
     await pool.promise().query(deleteQuery, [memberId]);
 

@@ -33,7 +33,6 @@ exports.signup = async (req, res) => {
     const values = [id, name, email, hashedPassword, createdAt];
     await pool.promise().query(query, values);
 
-    // Generating an access token
     const accessToken = jwt.sign({ id: id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
@@ -67,7 +66,7 @@ exports.signin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Checking if the user exists in the database
+    // if the user exists in the database
     const query =
       "SELECT id, name, email, created_at, password FROM user WHERE email = ?";
     const result = await pool.promise().query(query, [email]);
@@ -87,7 +86,7 @@ exports.signin = async (req, res) => {
       expiresIn: "24h",
     });
 
-    // Set the access token as a cookie
+    // access token as a cookie
     res.cookie("access_token", accessToken, {
       expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
       httpOnly: true,
@@ -122,7 +121,7 @@ exports.me = async (req, res) => {
       : null;
 
     if (!token) {
-      return res.status(401).json({ error: "Access token is missing" });
+      return res.status(401).json({ error: "Unauthorized used" });
     }
 
     jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {

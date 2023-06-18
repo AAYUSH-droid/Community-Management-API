@@ -20,7 +20,6 @@ exports.createCommunity = async (req, res) => {
     const result = await pool.promise().query(getCommunityQuery, [communityId]);
     const community = result[0][0];
 
-    // Return the response
     const response = {
       status: true,
       content: {
@@ -58,7 +57,7 @@ exports.getAllCommunities = async (req, res) => {
     const totalPages = Math.ceil(totalCommunities / limit);
     const currentPage = Math.min(page, totalPages);
 
-    // Retrieve the communities for the current page
+    // communities for the current page
     const offset = (currentPage - 1) * limit;
     const query = `
     SELECT c.id, c.name, c.slug, c.created_at, c.updated_at, u.id AS owner_id, u.name AS owner_name
@@ -216,12 +215,11 @@ exports.getAllMembers = async (req, res) => {
 exports.getOwnedCommunities = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 10; // Number of communities to fetch per page
+    const limit = 10;
 
-    // Retrieve the user ID from the authorization token
     const userId = getUserIdFromToken(req.headers.authorization);
 
-    // Count the total number of communities owned by the user
+    //total number of communities owned by the user
     const countQuery =
       "SELECT COUNT(*) AS total FROM community WHERE owner = ?";
     const countResult = await pool.promise().query(countQuery, [userId]);
@@ -271,37 +269,40 @@ exports.getOwnedCommunities = async (req, res) => {
 };
 
 //get my joined communities
-//visit later
 exports.getJoinedCommunities = async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req.headers.authorization);
+    const token = req.headers.authorization;
+    const userId = getUserIdFromToken(token);
+    // console.log(userId);
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = 10; // Number of communities to fetch per page
 
-    // Count the total number of joined communities for the user
-    const countQuery =
-      "SELECT COUNT(*) AS total FROM community WHERE id IN (SELECT community_id FROM community_member WHERE member_id = ?)";
+    // Get the total number of joined communities
+    const countQuery = "SELECT COUNT(*) AS total FROM member WHERE user = ?";
     const countResult = await pool.promise().query(countQuery, [userId]);
     const totalCommunities = countResult[0][0].total;
 
-    // Calculate pagination values
     const totalPages = Math.ceil(totalCommunities / limit);
     const currentPage = Math.min(page, totalPages);
 
-    // Fetch joined communities for the current page
     const offset = Math.max((currentPage - 1) * limit, 0);
     const query = `
-      SELECT c.id, c.name, c.slug, c.owner_id, c.created_at, c.updated_at, u.id AS owner_id, u.name AS owner_name
-      FROM community c
-      INNER JOIN user u ON c.owner_id = u.id
-      WHERE c.id IN (SELECT community_id FROM community_member WHERE member_id = ?)
+      SELECT c.id, c.name, c.slug, u.id AS owner_id, u.name AS owner_name, c.created_at, c.updated_at
+      FROM member m
+      INNER JOIN community c ON m.community = c.id
+      INNER JOIN user u ON c.owner = u.id
+      WHERE m.user = ?
       ORDER BY c.created_at DESC
       LIMIT ? OFFSET ?
     `;
     const result = await pool.promise().query(query, [userId, limit, offset]);
     const communities = result[0];
 
-    // Format the response
     const response = {
       status: true,
       content: {
@@ -327,6 +328,6 @@ exports.getJoinedCommunities = async (req, res) => {
     return res.json(response);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Unauthorized user" });
   }
 };
