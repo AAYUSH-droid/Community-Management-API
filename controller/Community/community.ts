@@ -1,23 +1,24 @@
 const jwt = require("jsonwebtoken");
 const { Snowflake } = require("@theinternetfolks/snowflake");
 const pool = require("../../db");
+import express, { Request, Response } from "express";
 
 //Post api to create a community
-exports.createCommunity = async (req, res) => {
+exports.createCommunity = async (req: Request, res: Response) => {
   try {
     const { name } = req.body;
     const slug = generateSlug(name);
     const accessToken = req.headers.authorization;
-    const ownerId = getUserIdFromToken(accessToken);
+    const ownerId = getUserIdFromToken(<string>accessToken);
 
     const communityId = Snowflake.generate();
 
     const query =
       "INSERT INTO community (id, name, slug, owner, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())";
-    await pool.promise().query(query, [communityId, name, slug, ownerId]);
+    await pool.query(query, [communityId, name, slug, ownerId]);
 
     const getCommunityQuery = "SELECT * FROM community WHERE id = ?";
-    const result = await pool.promise().query(getCommunityQuery, [communityId]);
+    const result = await pool.query(getCommunityQuery, [communityId]);
     const community = result[0][0];
 
     const response = {
@@ -33,25 +34,36 @@ exports.createCommunity = async (req, res) => {
   }
 };
 
-function generateSlug(name) {
+function generateSlug(name: String): string {
   return name.toLowerCase().replace(/\s/g, "");
 }
 
 // Function to get the user ID from the JWT access token(imp)
-function getUserIdFromToken(token) {
+function getUserIdFromToken(token: String): string {
   const accessToken = token.startsWith("Bearer ") ? token.slice(7) : token;
   const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
   return decodedToken.id;
 }
 
+// Defining the Community interface
+interface Community {
+  id: number;
+  name: string;
+  slug: string;
+  owner_id: number;
+  owner_name: string;
+  created_at: string;
+  updated_at: string;
+  owner: string;
+}
 //get all communities
-exports.getAllCommunities = async (req, res) => {
+exports.getAllCommunities = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page as string) || 1;
     const limit = 10; //max communities per page
 
     const countQuery = "SELECT COUNT(*) AS total FROM community";
-    const countResult = await pool.promise().query(countQuery);
+    const countResult = await pool.query(countQuery);
     const totalCommunities = countResult[0][0].total;
 
     const totalPages = Math.ceil(totalCommunities / limit);
@@ -66,7 +78,7 @@ exports.getAllCommunities = async (req, res) => {
     ORDER BY c.created_at DESC
     LIMIT ? OFFSET ?
   `;
-    const result = await pool.promise().query(query, [limit, offset]);
+    const result = await pool.query(query, [limit, offset]);
     const communities = result[0];
 
     const response = {
@@ -77,7 +89,8 @@ exports.getAllCommunities = async (req, res) => {
           pages: totalPages,
           page: currentPage,
         },
-        data: communities.map((community) => ({
+
+        data: communities.map((community: Community) => ({
           id: community.id,
           name: community.name,
           slug: community.slug,
@@ -98,9 +111,9 @@ exports.getAllCommunities = async (req, res) => {
   }
 };
 
-async function getRoleId(roleName) {
+async function getRoleId(roleName: string) {
   const roleQuery = "SELECT id FROM role WHERE name = ?";
-  const roleResult = await pool.promise().query(roleQuery, [roleName]);
+  const roleResult = await pool.query(roleQuery, [roleName]);
   if (roleResult[0].length > 0) {
     return roleResult[0][0].id;
   } else {
@@ -108,21 +121,32 @@ async function getRoleId(roleName) {
   }
 }
 
+//Defining the member interface
+interface Member {
+  id: number;
+  community: string;
+  user: number;
+  user_name: string;
+  role: number;
+  role_name: string;
+  created_at: string;
+}
+
 //get all members of a community
-exports.getAllMembers = async (req, res) => {
+exports.getAllMembers = async (req: Request, res: Response) => {
   try {
     const slug = req.params.slug;
-    const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page as string) || 1;
     const limit = 10; // Number of members to fetch per page
 
     const communityQuery = "SELECT id, owner FROM community WHERE slug = ?";
-    const communityResult = await pool.promise().query(communityQuery, [slug]);
+    const communityResult = await pool.query(communityQuery, [slug]);
     const communityId = communityResult[0][0].id;
     const ownerId = communityResult[0][0].owner;
 
     const countQuery =
       "SELECT COUNT(*) AS total FROM member WHERE community = ?";
-    const countResult = await pool.promise().query(countQuery, [communityId]);
+    const countResult = await pool.query(countQuery, [communityId]);
     const totalMembers = countResult[0][0].total;
 
     const totalPages = Math.ceil(totalMembers / limit);
@@ -138,19 +162,17 @@ exports.getAllMembers = async (req, res) => {
       ORDER BY m.created_at DESC
       LIMIT ? OFFSET ?
     `;
-    const result = await pool
-      .promise()
-      .query(query, [communityId, limit, offset]);
+    const result = await pool.query(query, [communityId, limit, offset]);
     const members = result[0];
 
     const ownerQuery = "SELECT name FROM user WHERE id = ?";
-    const ownerResult = await pool.promise().query(ownerQuery, [ownerId]);
+    const ownerResult = await pool.query(ownerQuery, [ownerId]);
     const ownerName = ownerResult[0][0].name;
 
     const roleForAdmin = "select id FROM role where name = ?";
-    const roleForAdminResult = await pool
-      .promise()
-      .query(roleForAdmin, ["Community Admin"]);
+    const roleForAdminResult = await pool.query(roleForAdmin, [
+      "Community Admin",
+    ]);
     const AdminID = roleForAdminResult[0][0].id;
 
     const ownerQuery2CR_AT = `
@@ -159,7 +181,7 @@ exports.getAllMembers = async (req, res) => {
     JOIN user u ON c.owner = u.id
     WHERE c.slug = ?
   `;
-    const ownerResult1 = await pool.promise().query(ownerQuery2CR_AT, [slug]);
+    const ownerResult1 = await pool.query(ownerQuery2CR_AT, [slug]);
     const createdAt = ownerResult1[0][0].created_at;
 
     const communityAdmin = {
@@ -187,7 +209,7 @@ exports.getAllMembers = async (req, res) => {
         },
         data: [
           communityAdmin,
-          ...members.map((member) => ({
+          ...members.map((member: Member) => ({
             id: member.id,
             community: member.community,
             user: {
@@ -212,17 +234,17 @@ exports.getAllMembers = async (req, res) => {
 };
 
 //get my owned communities
-exports.getOwnedCommunities = async (req, res) => {
+exports.getOwnedCommunities = async (req: Request, res: Response) => {
   try {
-    const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page as string) || 1;
     const limit = 10;
 
-    const userId = getUserIdFromToken(req.headers.authorization);
+    const userId = getUserIdFromToken(req.headers.authorization as string);
 
     //total number of communities owned by the user
     const countQuery =
       "SELECT COUNT(*) AS total FROM community WHERE owner = ?";
-    const countResult = await pool.promise().query(countQuery, [userId]);
+    const countResult = await pool.query(countQuery, [userId]);
     const totalCommunities = countResult[0][0].total;
 
     // Calculate pagination values
@@ -238,7 +260,7 @@ exports.getOwnedCommunities = async (req, res) => {
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
-    const result = await pool.promise().query(query, [userId, limit, offset]);
+    const result = await pool.query(query, [userId, limit, offset]);
     const communities = result[0];
 
     // Format the response
@@ -250,7 +272,7 @@ exports.getOwnedCommunities = async (req, res) => {
           pages: totalPages,
           page: currentPage,
         },
-        data: communities.map((community) => ({
+        data: communities.map((community: Community) => ({
           id: community.id,
           name: community.name,
           slug: community.slug,
@@ -269,22 +291,22 @@ exports.getOwnedCommunities = async (req, res) => {
 };
 
 //get my joined communities
-exports.getJoinedCommunities = async (req, res) => {
+exports.getJoinedCommunities = async (req: Request, res: Response) => {
   try {
     const token = req.headers.authorization;
-    const userId = getUserIdFromToken(token);
+    const userId = getUserIdFromToken(token as string);
     // console.log(userId);
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const page = parseInt(req.query.page) || 1;
+    const page = parseInt(req.query.page as string) || 1;
     const limit = 10; // Number of communities to fetch per page
 
     // Get the total number of joined communities
     const countQuery = "SELECT COUNT(*) AS total FROM member WHERE user = ?";
-    const countResult = await pool.promise().query(countQuery, [userId]);
+    const countResult = await pool.query(countQuery, [userId]);
     const totalCommunities = countResult[0][0].total;
 
     const totalPages = Math.ceil(totalCommunities / limit);
@@ -300,7 +322,7 @@ exports.getJoinedCommunities = async (req, res) => {
       ORDER BY c.created_at DESC
       LIMIT ? OFFSET ?
     `;
-    const result = await pool.promise().query(query, [userId, limit, offset]);
+    const result = await pool.query(query, [userId, limit, offset]);
     const communities = result[0];
 
     const response = {
@@ -311,7 +333,7 @@ exports.getJoinedCommunities = async (req, res) => {
           pages: totalPages,
           page: currentPage,
         },
-        data: communities.map((community) => ({
+        data: communities.map((community: Community) => ({
           id: community.id,
           name: community.name,
           slug: community.slug,
