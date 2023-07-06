@@ -1,11 +1,11 @@
 require("dotenv").config();
-const express = require("express");
+import express, { Express, Request, Response } from "express";
 const app = express();
 const port = process.env.PORT;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
+app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 

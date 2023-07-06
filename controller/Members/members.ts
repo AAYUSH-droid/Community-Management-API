@@ -1,22 +1,23 @@
 const jwt = require("jsonwebtoken");
 const { Snowflake } = require("@theinternetfolks/snowflake");
 const pool = require("../../db");
+import express, { Request, Response } from "express";
 
 // Function to get the user ID from the JWT access token
-function getUserIdFromToken(token) {
+function getUserIdFromToken(token: String) {
   const accessToken = token.startsWith("Bearer ") ? token.slice(7) : token;
   const decodedToken = jwt.verify(accessToken, process.env.JWT_SECRET);
   return decodedToken.id;
 }
 
 // POST /v1/member
-exports.addMember = async (req, res) => {
+exports.addMember = async (req: Request, res: Response) => {
   try {
     const { community, user, role } = req.body;
 
     const token = req.headers.authorization;
 
-    const ownerId = getUserIdFromToken(token);
+    const ownerId = getUserIdFromToken(token as String);
 
     const isCommunityAdmin = await checkIfCommunityAdmin(community, ownerId);
 
@@ -33,7 +34,7 @@ exports.addMember = async (req, res) => {
     const query =
       "INSERT INTO member (id, community, user, role, created_at) VALUES (?, ?, ?, ?, ?)";
     // const createdAt = new Date().toISOString();
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
       timeZone: "Asia/Kolkata",
       year: "numeric",
       month: "2-digit",
@@ -72,7 +73,7 @@ exports.addMember = async (req, res) => {
 };
 
 // Function to check if the user is a Community Admin
-async function checkIfCommunityAdmin(communityId, ownerId) {
+async function checkIfCommunityAdmin(communityId: String, ownerId: String) {
   const query = "SELECT owner FROM community WHERE id = ?";
   const result = await pool.promise().query(query, [communityId]);
   const owner = result[0][0].owner;
@@ -81,11 +82,11 @@ async function checkIfCommunityAdmin(communityId, ownerId) {
 }
 
 //delete api
-exports.deleteMember = async (req, res) => {
+exports.deleteMember = async (req: Request, res: Response) => {
   try {
     const memberId = req.params.memberId;
     const token = req.headers.authorization;
-    const userId = getUserIdFromToken(token);
+    const userId = getUserIdFromToken(token as string);
     const communityId = await getCommunityIdFromMemberId(memberId);
 
     const isCommunityAdmin = await checkIfCommunityAdmin(communityId, userId);
@@ -103,7 +104,7 @@ exports.deleteMember = async (req, res) => {
   }
 };
 
-async function getCommunityIdFromMemberId(memberId) {
+async function getCommunityIdFromMemberId(memberId: String) {
   const query = "SELECT community FROM member WHERE id = ?";
   const result = await pool.promise().query(query, [memberId]);
   if (result[0].length > 0) {
