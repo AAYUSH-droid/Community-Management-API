@@ -7,7 +7,7 @@ const promise_1 = __importDefault(require("mysql2/promise"));
 const pool = promise_1.default.createPool({
     host: "localhost",
     user: "root",
-    password: "aayushdb",
+    password: "",
     database: "tif",
 });
 module.exports = pool;

@@ -1,4 +1,5 @@
-const { Sequelize, DataTypes } = require("sequelize");
+import { Sequelize, DataTypes } from "sequelize";
+import { Model } from "sequelize/types";
 
 const sequelize = new Sequelize("acumensa", "root", "aayushdb", {
   host: "localhost",
@@ -10,12 +11,27 @@ sequelize
   .then(() => {
     console.log("Connection has been established successfully.");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to connect to the database: ", error);
   });
 
-const User = sequelize.define(
-  "User",
+interface UserAttributes {
+  id: string;
+  name?: string | null;
+  email: string;
+  password?: string;
+  created_at: Date;
+}
+
+class User extends Model<UserAttributes> implements UserAttributes {
+  public id!: string;
+  public name?: string | null;
+  public email!: string;
+  public password?: string;
+  public created_at!: Date;
+}
+
+User.init(
   {
     id: {
       type: DataTypes.STRING,
@@ -39,6 +55,7 @@ const User = sequelize.define(
     },
   },
   {
+    sequelize,
     tableName: "user", // Set the table name
   }
 );
@@ -46,10 +63,10 @@ const User = sequelize.define(
 sequelize
   .sync()
   .then(() => {
-    console.log("Book table created successfully!");
+    console.log("User table created successfully!");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to create table : ", error);
   });
 
-module.exports = User;
+export default User;

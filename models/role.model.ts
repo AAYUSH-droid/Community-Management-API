@@ -1,6 +1,7 @@
-const { Sequelize, DataTypes } = require("sequelize");
+import { Sequelize, DataTypes } from "sequelize";
+import { Model } from "sequelize/types";
 
-const sequelize = new Sequelize("acumensa", "root", "aayushdb", {
+const sequelize = new Sequelize("acumensa", "root", "", {
   host: "localhost",
   dialect: "mysql",
 });
@@ -10,12 +11,25 @@ sequelize
   .then(() => {
     console.log("Connection has been established successfully.");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to connect to the database: ", error);
   });
 
-const Role = sequelize.define(
-  "Role",
+interface RoleAttributes {
+  id: string;
+  name: string;
+  created_at: Date;
+  updated_at: Date;
+}
+
+class Role extends Model<RoleAttributes> implements RoleAttributes {
+  public id!: string;
+  public name!: string;
+  public created_at!: Date;
+  public updated_at!: Date;
+}
+
+Role.init(
   {
     id: {
       type: DataTypes.STRING,
@@ -34,8 +48,8 @@ const Role = sequelize.define(
       type: DataTypes.DATE,
     },
   },
-
   {
+    sequelize,
     tableName: "role",
   }
 );
@@ -45,6 +59,6 @@ sequelize
   .then(() => {
     console.log("Role table created successfully!");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to create table : ", error);
   });

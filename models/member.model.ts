@@ -1,9 +1,11 @@
-const { Sequelize, DataTypes } = require("sequelize");
+import { Sequelize, DataTypes } from "sequelize";
+import { Model } from "sequelize/types";
+
 const Community = require("./community.model");
 const User = require("./user.model");
 const Role = require("./role.model");
 
-const sequelize = new Sequelize("acumensa", "root", "aayushdb", {
+const sequelize = new Sequelize("acumensa", "root", "", {
   host: "localhost",
   dialect: "mysql",
 });
@@ -13,12 +15,27 @@ sequelize
   .then(() => {
     console.log("Connection has been established successfully.");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to connect to the database: ", error);
   });
 
-const Member = sequelize.define(
-  "Member",
+interface MemberAttributes {
+  id: string;
+  community: string;
+  user: string;
+  role: string;
+  created_at: Date;
+}
+
+class Member extends Model<MemberAttributes> implements MemberAttributes {
+  public id!: string;
+  public community!: string;
+  public user!: string;
+  public role!: string;
+  public created_at!: Date;
+}
+
+Member.init(
   {
     id: {
       type: DataTypes.STRING,
@@ -29,7 +46,7 @@ const Member = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: "Community",
+        model: Community,
         key: "id",
       },
     },
@@ -37,7 +54,7 @@ const Member = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: "User",
+        model: User,
         key: "id",
       },
     },
@@ -45,7 +62,7 @@ const Member = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
       references: {
-        model: "Role",
+        model: Role,
         key: "id",
       },
     },
@@ -54,6 +71,7 @@ const Member = sequelize.define(
     },
   },
   {
+    sequelize,
     tableName: "member",
   }
 );
@@ -63,6 +81,6 @@ sequelize
   .then(() => {
     console.log("Member table created successfully!");
   })
-  .catch((error) => {
+  .catch((error: Error) => {
     console.error("Unable to create table : ", error);
   });
